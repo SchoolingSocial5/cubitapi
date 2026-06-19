@@ -18,6 +18,7 @@ export interface IListing extends Document {
     landmark?: string;
     lat?: number;
     lng?: number;
+    coordinates?: { lat: number, lng: number }[];
 
     // Features
     bedrooms?: number;
@@ -39,6 +40,8 @@ export interface IListing extends Document {
     isSold: boolean;
     isAuctioned: boolean;
     plots?: number;
+    bookmarks: number;
+    isBookmarked?: boolean;
     slug: string;
     createdAt: Date;
     updatedAt: Date;
@@ -92,6 +95,10 @@ const listingSchema: Schema = new Schema({
     landmark: String,
     lat: Number,
     lng: Number,
+    coordinates: [{
+        lat: Number,
+        lng: Number
+    }],
     bedrooms: Number,
     bathrooms: Number,
     areaSize: Number,
@@ -125,6 +132,10 @@ const listingSchema: Schema = new Schema({
         default: false
     },
     plots: {
+        type: Number,
+        default: 0
+    },
+    bookmarks: {
         type: Number,
         default: 0
     }

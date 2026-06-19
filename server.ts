@@ -18,6 +18,9 @@ import placeRoutes from './src/routes/placeRoutes';
 import templateRoutes from './src/routes/templateRoutes';
 import listingRoutes from './src/routes/listingRoutes';
 import auctionRoutes from './src/routes/auctionRoutes';
+import policyRoutes from './src/routes/policyRoutes';
+import blogRoutes from './src/routes/blogRoutes';
+import bookmarkRoutes from './src/routes/bookmarkRoutes';
 
 // Connect to database
 connectDB();
@@ -42,6 +45,9 @@ app.use('/api/v1/places', placeRoutes);
 app.use('/api/v1/templates', templateRoutes);
 app.use('/api/v1/listings', listingRoutes);
 app.use('/api/v1/auctions', auctionRoutes);
+app.use('/api/v1/policies', policyRoutes);
+app.use('/api/v1/blogs', blogRoutes);
+app.use('/api/v1/bookmarks', bookmarkRoutes);
 
 app.get('/', (req: Request, res: Response) => {
     res.send('API is running in TypeScript...');

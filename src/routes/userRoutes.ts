@@ -5,11 +5,12 @@ import { protect, authorize } from '../middleware/auth';
 const router = express.Router();
 
 router.post('/', createUser);
-router.get('/', protect, authorize('admin', 'staff'), getUsers);
-router.get('/:id', protect, authorize('admin', 'staff'), getUser);
-router.put('/:id/verify', protect, authorize('admin', 'staff'), updateUserStatus);
 router.post('/login', loginUser);
 router.get('/me', protect, getMe);
 router.put('/verify', protect, verifyUser);
+
+router.get('/', protect, authorize('admin', 'staff'), getUsers);
+router.get('/:id', protect, authorize('admin', 'staff'), getUser);
+router.put('/:id/verify', protect, authorize('admin', 'staff'), updateUserStatus);
 
 export default router;

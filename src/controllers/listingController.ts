@@ -1,6 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import Listing, { IListing } from '../models/Listing';
 import Auction from '../models/Auction';
+import Bookmark from '../models/Bookmark';
+import User from '../models/User';
+import jwt from 'jsonwebtoken';
 import ErrorResponse from '../utils/errorResponse';
 import asyncHandler from '../middleware/asyncHandler';
 import { uploadToS3, deleteFromS3 } from '../utils/s3';
@@ -11,6 +14,34 @@ import paginate from '../utils/paginate';
 // @access  Public
 export const getListings = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const results = await paginate(Listing, req);
+
+    let userId = null;
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+        const token = req.headers.authorization.split(' ')[1];
+        try {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as any;
+            userId = decoded.id;
+        } catch (err) {
+            // Ignore invalid tokens on public routes
+        }
+    }
+
+    if (userId && results.data && results.data.length > 0) {
+        const listingIds = results.data.map((listing: any) => listing._id);
+        const userBookmarks = await Bookmark.find({ 
+            userId, 
+            propertyId: { $in: listingIds } 
+        });
+        
+        const bookmarkedSet = new Set(userBookmarks.map(b => b.propertyId.toString()));
+        
+        results.data = results.data.map((listing: any) => {
+            const listingObj = typeof listing.toObject === 'function' ? listing.toObject() : { ...listing };
+            listingObj.isBookmarked = bookmarkedSet.has(listingObj._id.toString());
+            return listingObj;
+        });
+    }
+
     res.status(200).json(results);
 });
 
