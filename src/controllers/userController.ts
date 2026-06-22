@@ -183,6 +183,110 @@ export const updateUserStatus = asyncHandler(async (req: Request, res: Response,
     });
 });
 
+// @desc    Update user profile (Settings)
+// @route   PUT /api/v1/users/profile
+// @access  Private
+export const updateProfile = asyncHandler(async (req: any, res: Response, next: NextFunction) => {
+    let pictureUrl = req.body.picture;
+
+    if (req.body.picture && req.body.picture.startsWith('data:')) {
+        try {
+            const base64Data = req.body.picture.split(',')[1];
+            const mimeType = req.body.picture.split(';')[0].split(':')[1];
+            const buffer = Buffer.from(base64Data, 'base64');
+            const fileName = `${req.user.username}-profile.${mimeType.split('/')[1]}`;
+
+            pictureUrl = await uploadToS3(buffer, fileName, mimeType);
+        } catch (err: any) {
+            return next(new ErrorResponse(`Failed to process/upload profile picture: ${err.message}`, 500));
+        }
+    }
+
+    const fieldsToUpdate: any = {
+        email: req.body.email,
+        phone: req.body.phone,
+    };
+    if (req.body.accountType) fieldsToUpdate.accountType = req.body.accountType;
+    if (req.body.bio !== undefined) fieldsToUpdate.bio = req.body.bio;
+    if (req.body.website !== undefined) fieldsToUpdate.website = req.body.website;
+
+    if (pictureUrl) fieldsToUpdate.picture = pictureUrl;
+
+    try {
+        const user = await User.findByIdAndUpdate(req.user.id, fieldsToUpdate, {
+            new: true,
+            runValidators: true
+        });
+
+        res.status(200).json({
+            success: true,
+            data: user
+        });
+    } catch (err: any) {
+        if (err.code === 11000) {
+            return next(new ErrorResponse('Email is already registered to another account', 400));
+        }
+        next(err);
+    }
+});
+
+// @desc    Update user password
+// @route   PUT /api/v1/users/password
+// @access  Private
+export const updatePassword = asyncHandler(async (req: any, res: Response, next: NextFunction) => {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+        return next(new ErrorResponse('Please provide current and new password', 400));
+    }
+
+    const user = await User.findById(req.user.id).select('+password');
+    if (!user) {
+        return next(new ErrorResponse('User not found', 404));
+    }
+
+    const isMatch = await user.matchPassword(currentPassword);
+    if (!isMatch) {
+        return next(new ErrorResponse('Incorrect current password', 401));
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.status(200).json({
+        success: true,
+        data: 'Password updated successfully'
+    });
+});
+// @desc    Delete user account
+// @route   DELETE /api/v1/users/account
+// @access  Private
+export const deleteAccount = asyncHandler(async (req: any, res: Response, next: NextFunction) => {
+    const { password } = req.body;
+
+    if (!password) {
+        return next(new ErrorResponse('Please provide password to authorize deletion', 400));
+    }
+
+    const user = await User.findById(req.user.id).select('+password');
+    if (!user) {
+        return next(new ErrorResponse('User not found', 404));
+    }
+
+    const isMatch = await user.matchPassword(password);
+    if (!isMatch) {
+        return next(new ErrorResponse('Incorrect password', 401));
+    }
+
+    await User.findByIdAndDelete(req.user.id);
+
+    res.status(200).json({
+        success: true,
+        data: 'Account deleted successfully'
+    });
+});
+
+
 // Get token from model, create cookie and send response
 const sendTokenResponse = (user: any, statusCode: number, res: Response) => {
     // Create token
@@ -204,6 +308,7 @@ const sendTokenResponse = (user: any, statusCode: number, res: Response) => {
                 id: user._id,
                 username: user.username,
                 email: user.email,
+                picture: user.picture,
                 role: user.role,
                 firstName: user.firstName,
                 middleName: user.middleName,

@@ -15,7 +15,10 @@ export interface IUser extends Document {
     idCard?: string;
     idName?: string;
     passport?: string;
+    bio?: string;
+    website?: string;
     role: 'user' | 'admin' | 'staff';
+    accountType?: 'User' | 'Agent';
     phone?: string;
     firstName: string;
     middleName?: string;
@@ -60,10 +63,20 @@ const userSchema: Schema = new Schema({
     idCard: String,
     idName: String,
     passport: String,
+    bio: {
+        type: String,
+        maxlength: [500, 'Bio cannot exceed 500 characters']
+    },
+    website: String,
     role: {
         type: String,
         enum: ['user', 'admin', 'staff'],
         default: 'user'
+    },
+    accountType: {
+        type: String,
+        enum: ['User', 'Agent'],
+        default: 'User'
     },
     phone: String,
     firstName: {
