@@ -16,6 +16,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.987.0",
     "@aws-sdk/lib-storage": "^3.987.0",
+    "@aws-sdk/s3-request-presigner": "^3.1075.0",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.2.4",

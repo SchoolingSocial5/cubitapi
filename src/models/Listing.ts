@@ -3,7 +3,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface IListing extends Document {
     title: string;
     description: string;
-    type: 'House' | 'Land' | 'Design' | 'Rent';
+    type: 'House' | 'Land' | 'Design';
     category: 'For Sale' | 'For Rent' | 'Auction';
     subType?: string;
     price: number;
@@ -50,7 +50,7 @@ export interface IListing extends Document {
 const listingSchema: Schema = new Schema({
     title: {
         type: String,
-        required: [true, 'Please add a title'],
+        required: [function(this: IListing) { return this.isPublished; }, 'Please add a title'],
         trim: true,
         maxlength: [100, 'Title can not be more than 100 characters']
     },
@@ -62,11 +62,11 @@ const listingSchema: Schema = new Schema({
     type: {
         type: String,
         required: [true, 'Please select a property type'],
-        enum: ['House', 'Land', 'Design', 'Rent']
+        enum: ['House', 'Land', 'Design']
     },
     category: {
         type: String,
-        required: [true, 'Please select a category'],
+        required: [function(this: IListing) { return this.isPublished; }, 'Please select a category'],
         enum: ['For Sale', 'For Rent', 'Auction']
     },
     subType: {

@@ -167,10 +167,18 @@ export const createListing = asyncHandler(async (req: any, res: Response, next: 
 // @route   GET /api/v1/listings/my-draft
 // @access  Private
 export const getMyDraft = asyncHandler(async (req: any, res: Response, next: NextFunction) => {
-    const draft = await Listing.findOne({
+    const { type } = req.query;
+    
+    const query: any = {
         userId: req.user.id,
         isPublished: false
-    }).sort({ updatedAt: -1 });
+    };
+    
+    if (type) {
+        query.type = type;
+    }
+
+    const draft = await Listing.findOne(query).sort({ updatedAt: -1 });
 
     res.status(200).json({
         success: true,
